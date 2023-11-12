@@ -6,6 +6,7 @@ import {
 	Flex,
 	FormControl,
 	FormLabel,
+	IconButton,
 	Input,
 	Modal,
 	ModalBody,
@@ -15,24 +16,39 @@ import {
 	ModalHeader,
 	ModalOverlay,
 	Text,
+	useColorMode,
 	useDisclosure,
 	useToast,
 } from "@chakra-ui/react";
+import { SunIcon, MoonIcon } from "@chakra-ui/icons";
+import { IoMdNotificationsOff, IoMdNotifications } from "react-icons/io";
 
 const Index: React.FC = () => {
 	const toast = useToast();
+	const { colorMode, toggleColorMode } = useColorMode();
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [path, setPath] = useState("");
 	const [isActive, setIsActive] = useState(false);
+	const [showNotifications, setShowNotifications] = useState(true);
 
 	const submit = (event?: FormEvent<HTMLFormElement>) => {
 		event?.preventDefault();
 
+		if (navigator.userAgent.toLowerCase().indexOf(" electron/") === -1) {
+			toast({
+				title: "Error",
+				description: "Not an Electron environment!",
+				status: "error",
+				duration: 5000,
+				isClosable: true,
+			});
+			return;
+		}
+
 		if (isActive) {
 			setIsActive(false);
-			onOpen();
-
 			window.ipc.send("stop", "");
+			if (showNotifications) onOpen();
 		} else if (path === "") {
 			toast({
 				title: "Error",
@@ -42,9 +58,9 @@ const Index: React.FC = () => {
 				isClosable: true,
 			});
 		} else if (!isActive) {
-			window.ipc.send("execute", path);
 			setIsActive(true);
-			onOpen();
+			window.ipc.send("execute", path);
+			if (showNotifications) onOpen();
 		}
 	};
 
@@ -54,7 +70,7 @@ const Index: React.FC = () => {
 				<title>GameLauncher</title>
 			</Head>
 			<Flex h="100vh" direction="column" alignItems="center" textAlign="center">
-				<Flex direction="column" m="5rem">
+				<Flex direction="column" m="6rem">
 					<Text fontSize="6xl">GameLauncher</Text>
 					<Text>Launch games now, quickly and easily</Text>
 				</Flex>
@@ -78,6 +94,42 @@ const Index: React.FC = () => {
 						</Flex>
 					</FormControl>
 				</form>
+
+				<Flex
+					bg="gray.500"
+					w="30rem"
+					h="5rem"
+					justifyContent="center"
+					rounded="10px"
+					alignItems="center"
+					m="5rem"
+				>
+					<Button isDisabled={!isActive}>Show Logs</Button>
+					<Flex>
+						<IconButton
+							onClick={toggleColorMode}
+							aria-label="Change Theme"
+							icon={colorMode === "dark" ? <SunIcon /> : <MoonIcon />}
+							ml="1rem"
+							mr="1rem"
+						/>
+						<IconButton
+							onClick={() => {
+								showNotifications
+									? setShowNotifications(false)
+									: setShowNotifications(true);
+							}}
+							aria-label="Toggle Popups"
+							icon={
+								showNotifications ? (
+									<IoMdNotificationsOff />
+								) : (
+									<IoMdNotifications />
+								)
+							}
+						/>
+					</Flex>
+				</Flex>
 
 				<Modal isOpen={isOpen} onClose={onClose}>
 					<ModalOverlay />

@@ -2,12 +2,13 @@ import path from "path";
 import { app, ipcMain } from "electron";
 import serve from "electron-serve";
 import { createWindow } from "./helpers";
-import { exec, spawn, ChildProcess } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 
 type Data = string | Buffer;
 
 const isProd = process.env.NODE_ENV === "production";
 let runningProcess: ChildProcess = null;
+let output: string[] = [];
 
 if (isProd) {
 	serve({ directory: "app" });
@@ -53,15 +54,15 @@ ipcMain.on("execute", (event, command: string) => {
 	runningProcess = spawn(command, [], { shell: true });
 
 	runningProcess.stdout.on("data", (data: Data) => {
-		console.log(data.toString());
+		output.push(data.toString());
 	});
 
 	runningProcess.stderr.on("data", (data: Data) => {
-		console.error(data.toString());
+		output.push(data.toString());
 	});
 
 	runningProcess.on("close", (code: number) => {
-		console.log(`closed with code ${code}`);
+    output.push(`[GAMELAUNCHER]: Closed with code ${code}`)
 		runningProcess = null;
 	});
 });
@@ -70,8 +71,15 @@ ipcMain.on("stop", (event) => {
 	if (runningProcess) {
 		runningProcess.kill("SIGTERM");
 		runningProcess = null;
+    output = [];
 		event.reply("stop-response", { message: "terminated" });
 	} else {
 		event.reply("stop-response", { error: "no process to stop" });
 	}
+});
+
+ipcMain.on("get-logs", (event) => {
+	runningProcess
+		? event.reply("get-logs-response", { message: output })
+		: event.reply("get-logs-response", { error: "no current running process" });
 });
