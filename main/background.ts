@@ -2,9 +2,12 @@ import path from "path";
 import { app, ipcMain } from "electron";
 import serve from "electron-serve";
 import { createWindow } from "./helpers";
-import { exec } from "child_process";
+import { exec, spawn, ChildProcess } from "child_process";
+
+type Data = string | Buffer;
 
 const isProd = process.env.NODE_ENV === "production";
+let runningProcess: ChildProcess = null;
 
 if (isProd) {
 	serve({ directory: "app" });
@@ -42,7 +45,33 @@ ipcMain.on("message", async (event, arg) => {
 });
 
 ipcMain.on("execute", (event, command: string) => {
-	exec(command, (error, stdout, stderr) => {
-		console.log(stdout);
+	if (runningProcess) {
+		event.reply("execute-response", { error: "process is already running" });
+		return;
+	}
+
+	runningProcess = spawn(command, [], { shell: true });
+
+	runningProcess.stdout.on("data", (data: Data) => {
+		console.log(data.toString());
 	});
+
+	runningProcess.stderr.on("data", (data: Data) => {
+		console.error(data.toString());
+	});
+
+	runningProcess.on("close", (code: number) => {
+		console.log(`closed with code ${code}`);
+		runningProcess = null;
+	});
+});
+
+ipcMain.on("stop", (event) => {
+	if (runningProcess) {
+		runningProcess.kill("SIGTERM");
+		runningProcess = null;
+		event.reply("stop-response", { message: "terminated" });
+	} else {
+		event.reply("stop-response", { error: "no process to stop" });
+	}
 });
