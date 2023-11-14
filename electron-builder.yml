@@ -1,5 +1,5 @@
-appId: com.example.nextron
-productName: My Nextron App
+appId: gq.firestreaker2.gamelauncher
+productName: Game Launcher
 copyright: Copyright © 2023 FireStreaker2
 directories:
   output: dist

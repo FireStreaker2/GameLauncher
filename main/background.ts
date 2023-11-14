@@ -22,6 +22,7 @@ if (isProd) {
 	const mainWindow = createWindow("main", {
 		width: 1000,
 		height: 600,
+		icon: path.join(__dirname, "/icon.svg"),
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
 			nodeIntegration: false,

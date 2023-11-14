@@ -1,7 +1,7 @@
 {
 	"name": "game-launcher",
 	"version": "1.0.0",
-	"description": "Simple game launcher made with next + electron",
+	"description": "Simple game launcher made with Next, Electron, and Chakra",
 	"author": "FireStreaker2",
 	"main": "app/background.js",
 	"scripts": {

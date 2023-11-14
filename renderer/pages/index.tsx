@@ -82,7 +82,26 @@ const Index: React.FC = () => {
 	return (
 		<>
 			<Head>
+				<meta charSet="UTF-8" />
+				<meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<meta
+					name="description"
+					content="Simple game launcher made with Next, Electron, and Chakra"
+				/>
+				<meta name="keywords" content="FireStreaker2, GameLauncher" />
+				<meta name="copyright" content="FireStreaker2" />
+				<meta property="og:title" content="GameLauncher" />
+				<meta property="og:type" content="website" />
+				<meta
+					property="og:description"
+					content="Simple game launcher made with Next, Electron, and Chakra"
+				/>
+				<meta name="theme-color" content="#000000" />
+				<meta name="twitter:card" content="summary_large_image" />
+
 				<title>GameLauncher</title>
+				<link rel="icon" type="image/x-icon" href="/icon.svg" />
 			</Head>
 			<Flex h="100vh" direction="column" alignItems="center" textAlign="center">
 				<Flex direction="column" m="6rem">
@@ -174,16 +193,12 @@ const Index: React.FC = () => {
 						</ModalHeader>
 						<ModalCloseButton />
 						<ModalBody wordBreak="break-all">
-							{isActive ? (
-								<Text>
-									<Code>{path}</Code> is now running! If nothing happens try
-									re-running the program.
-								</Text>
-							) : (
-								<Text>
-									<Code>{path}</Code> has been stopped.
-								</Text>
-							)}
+							<Text>
+								<Code>{path}</Code>{" "}
+								{isActive
+									? "is now running! If nothing happens try re-running the program."
+									: "has been stopped."}
+							</Text>
 						</ModalBody>
 
 						<ModalFooter>
@@ -204,7 +219,14 @@ const Index: React.FC = () => {
 
 							<Code>
 								{logs
-									? logs.map((item) => <Text>{`${item} \n`}</Text>)
+									? logs.map((item) => (
+											<Text>{`${new Date().toLocaleTimeString("en-US", {
+												hour12: false,
+												hour: "2-digit",
+												minute: "2-digit",
+												second: "2-digit",
+											})} ${item} \n`}</Text>
+									  ))
 									: "No Logs"}
 							</Code>
 						</ModalBody>
