@@ -62,7 +62,7 @@ ipcMain.on("execute", (event, command: string) => {
 	});
 
 	runningProcess.on("close", (code: number) => {
-    output.push(`[GAMELAUNCHER]: Closed with code ${code}`)
+		output.push(`[GAMELAUNCHER]: Closed with code ${code}`);
 		runningProcess = null;
 	});
 });
@@ -71,15 +71,15 @@ ipcMain.on("stop", (event) => {
 	if (runningProcess) {
 		runningProcess.kill("SIGTERM");
 		runningProcess = null;
-    output = [];
+		output = [];
 		event.reply("stop-response", { message: "terminated" });
 	} else {
-		event.reply("stop-response", { error: "no process to stop" });
+		event.reply("stop-response", { message: "no process to stop" });
 	}
 });
 
 ipcMain.on("get-logs", (event) => {
 	runningProcess
-		? event.reply("get-logs-response", { message: output })
-		: event.reply("get-logs-response", { error: "no current running process" });
+		? event.reply("get-logs-response", output)
+		: event.reply("get-logs-response", ["no current running game"]);
 });

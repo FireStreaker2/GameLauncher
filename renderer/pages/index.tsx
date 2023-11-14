@@ -6,6 +6,7 @@ import {
 	Flex,
 	FormControl,
 	FormLabel,
+	Icon,
 	IconButton,
 	Input,
 	Modal,
@@ -21,13 +22,27 @@ import {
 	useToast,
 } from "@chakra-ui/react";
 import { SunIcon, MoonIcon } from "@chakra-ui/icons";
-import { IoMdNotificationsOff, IoMdNotifications } from "react-icons/io";
+import {
+	IoMdNotificationsOff,
+	IoMdNotifications,
+	IoLogoGameControllerB,
+} from "react-icons/io";
 
 const Index: React.FC = () => {
 	const toast = useToast();
 	const { colorMode, toggleColorMode } = useColorMode();
-	const { isOpen, onOpen, onClose } = useDisclosure();
+	const {
+		isOpen: isNotifcationOpen,
+		onOpen: onNotifcationOpen,
+		onClose: onNotifcationClose,
+	} = useDisclosure();
+	const {
+		isOpen: isLogsOpen,
+		onOpen: onLogsOpen,
+		onClose: onLogsClose,
+	} = useDisclosure();
 	const [path, setPath] = useState("");
+	const [logs, setLogs] = useState<string[]>([]);
 	const [isActive, setIsActive] = useState(false);
 	const [showNotifications, setShowNotifications] = useState(true);
 
@@ -48,7 +63,7 @@ const Index: React.FC = () => {
 		if (isActive) {
 			setIsActive(false);
 			window.ipc.send("stop", "");
-			if (showNotifications) onOpen();
+			if (showNotifications) onNotifcationOpen();
 		} else if (path === "") {
 			toast({
 				title: "Error",
@@ -60,7 +75,7 @@ const Index: React.FC = () => {
 		} else if (!isActive) {
 			setIsActive(true);
 			window.ipc.send("execute", path);
-			if (showNotifications) onOpen();
+			if (showNotifications) onNotifcationOpen();
 		}
 	};
 
@@ -72,7 +87,10 @@ const Index: React.FC = () => {
 			<Flex h="100vh" direction="column" alignItems="center" textAlign="center">
 				<Flex direction="column" m="6rem">
 					<Text fontSize="6xl">GameLauncher</Text>
-					<Text>Launch games now, quickly and easily</Text>
+					<Text>
+						Launch games now, quickly and easily{" "}
+						<Icon as={IoLogoGameControllerB} />
+					</Text>
 				</Flex>
 
 				<form onSubmit={submit}>
@@ -88,7 +106,11 @@ const Index: React.FC = () => {
 								placeholder="/usr/bin/osu!"
 								onChange={(event) => setPath(event.target.value.trim())}
 							/>
-							<Button mt="0.5rem" onClick={() => submit()}>
+							<Button
+								mt="0.5rem"
+								onClick={() => submit()}
+								bg={isActive ? "red.500" : "green.500"}
+							>
 								{!isActive ? "Run" : "Stop"}
 							</Button>
 						</Flex>
@@ -104,7 +126,20 @@ const Index: React.FC = () => {
 					alignItems="center"
 					m="5rem"
 				>
-					<Button isDisabled={!isActive}>Show Logs</Button>
+					<Button
+						isDisabled={!isActive}
+						bg="gray.600"
+						onClick={() => {
+							onLogsOpen();
+							window.ipc.send("get-logs", "");
+
+							window.ipc.on("get-logs-response", (data: string[]) => {
+								setLogs(data);
+							});
+						}}
+					>
+						Show Logs
+					</Button>
 					<Flex>
 						<IconButton
 							onClick={toggleColorMode}
@@ -131,14 +166,14 @@ const Index: React.FC = () => {
 					</Flex>
 				</Flex>
 
-				<Modal isOpen={isOpen} onClose={onClose}>
+				<Modal isOpen={isNotifcationOpen} onClose={onNotifcationClose}>
 					<ModalOverlay />
 					<ModalContent>
 						<ModalHeader>
 							{isActive ? "Game is now running..." : "Game has been stopped"}
 						</ModalHeader>
 						<ModalCloseButton />
-						<ModalBody>
+						<ModalBody wordBreak="break-all">
 							{isActive ? (
 								<Text>
 									<Code>{path}</Code> is now running! If nothing happens try
@@ -152,7 +187,30 @@ const Index: React.FC = () => {
 						</ModalBody>
 
 						<ModalFooter>
-							<Button onClick={onClose}>Close</Button>
+							<Button onClick={onNotifcationClose}>Close</Button>
+						</ModalFooter>
+					</ModalContent>
+				</Modal>
+
+				<Modal isOpen={isLogsOpen} onClose={onLogsClose}>
+					<ModalOverlay />
+					<ModalContent>
+						<ModalHeader>Game Logs</ModalHeader>
+						<ModalCloseButton />
+						<ModalBody wordBreak="break-all">
+							<Text mb="0.5rem">
+								Logs for <Code>{path}</Code>:
+							</Text>
+
+							<Code>
+								{logs
+									? logs.map((item) => <Text>{`${item} \n`}</Text>)
+									: "No Logs"}
+							</Code>
+						</ModalBody>
+
+						<ModalFooter>
+							<Button onClick={onLogsClose}>Close</Button>
 						</ModalFooter>
 					</ModalContent>
 				</Modal>
